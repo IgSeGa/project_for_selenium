@@ -1,0 +1,9 @@
+[
+  "test_market.py::test_market",
+  "test_shop.py::test_market",
+  "test_shop1.py::test_buy",
+  "test_shop1.py::test_notify",
+  "test_shop1.py::test_search_page",
+  "test_shop2.py::test_notify",
+  "test_shop3.py::test_search_page"
+]
