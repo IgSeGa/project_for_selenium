@@ -1,5 +1,5 @@
-from selenium.common import NoSuchElementException
-from selenium.webdriver import ActionChains, Keys
+from selenium.common import NoSuchElementException, TimeoutException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait as WDW
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,6 +41,7 @@ class Category_page(Base):
     orig_price = '/html/body/div[1]/div/section/div/section/div/section[3]/div/div/div[4]/div/div[2]/label/div/div'
     orig_name = 'body > div.main > div > section > div > section > div > section.products > div > div > div.block > div.name > a'
     orig_name1 = 'body > div.main > div > section > div > section > div > section.products > div > div:nth-child(17) > div.block > div.name > a'
+    absent = 'body > div.main > div > section > div > section > div > p'
 
     """ПОЛУЧЕНИЕ ЭЛЕМЕНТОВ"""
     def get_price_min(self):#Получение поля минимальной цены
@@ -99,6 +100,8 @@ class Category_page(Base):
         return self.driver.find_element(By.CSS_SELECTOR, self.orig_name)
     def get_orig_name1(self):#Получение имени второго товара
         return self.driver.find_element(By.CSS_SELECTOR, self.orig_name1)
+    def get_absent(self):#Метод получения сообщения об отсутствии товаров
+        return self.driver.find_element(By.CSS_SELECTOR, self.absent)
 
 
     """МЕТОДЫ РАБОТЫ С ЭЛЕМЕНТАМИ"""
@@ -131,24 +134,51 @@ class Category_page(Base):
         print('Сместили дату')
     def set_publisher(self):#Установка издателя
         self.get_publisher().click()
-        self.get_publisher_click().click()
-        print('Выбрали издателя')
+        try:
+            self.get_publisher_click().click()
+            print('Выбрали издателя')
+        except TimeoutException:
+            print('ИЗМЕНИ ИЗДАТЕЛЯ, ПОДХОДЯЩЕГО НЕТ')
+            self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет издателя ' \
+                                        + self.date + '.png')
+            quit()
     def set_genre(self):#Установка жанра
-        self.get_genre().click()
-        self.get_genre_click().click()
-        print('Выбрали жанр')
+        try:
+            self.get_genre().click()
+            self.get_genre_click().click()
+            print('Выбрали жанр')
+        except TimeoutException:
+            print('ИЗМЕНИ ЖАНР, ПОДХОДЯЩЕГО НЕТ')
+            self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет жанра ' \
+                                        + self.date + '.png')
+            quit()
     def set_age(self):#Установка возрастного ограничения
-        self.get_age().click()
-        self.get_age_click().click()
-        print('Выбрали возрастное ограничение')
+        try:
+            self.get_age().click()
+            self.get_age_click().click()
+            print('Выбрали возрастное ограничение')
+        except TimeoutException:
+            print('ИЗМЕНИ ВОЗРАСТ, ПОДХОДЯЩЕГО НЕТ')
+            self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет возраста ' \
+                                        + self.date + '.png')
+            quit()
     def do_submit(self):#Применение изменений
         self.get_sub_button().click()
         print('Применили изменения')
         self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Применили изменения ' \
                                     + self.date + '.png')
-    def go_to_card(self):#Переход в карточку товара
-        self.get_item().click()
-        print('Перешли в карточку товара')
+    def go_to_card(self):  # Переход в карточку товара
+        try:
+            self.get_item().click()
+            print('Перешли в карточку товара')
+        except NoSuchElementException:
+            try:
+                a = self.get_absent().text
+                assert a == 'В данной категории нет товаров, или фильтр задан слишком строго.'
+                print('ИЗМЕНИ ПАРАМЕТРЫ, нет подходящих товаров')
+            except NoSuchElementException:
+                print('АЛЯРМ!!! СО СТРАНИЦЕЙ ЧТО-ТО НЕ ТАК!!!')
+
     def switch_to_consoles(self):#Переключение на раздел консолей
         self.get_consoles().click()
         print('Перешли в раздел "Консоли"')
@@ -162,11 +192,26 @@ class Category_page(Base):
         self.get_sale().click()
         print('Выбрали чекбокс "Распродажа"')
     def do_learn(self):#Метод подписки на поступление товара. Здесь заканчивается ничем, чтобы не спамить магазину
-        self.get_learn().click()
-        self.get_put_notification().send_keys('123@123.ru')
-        print('Ввели данные сообщения о поступлении')
-        self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Окно оповещения ' \
+        try:
+            self.get_learn().click()
+            self.get_put_notification().send_keys('123@123.ru')
+            print('Ввели данные сообщения о поступлении')
+            self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Окно оповещения ' \
                                     + self.date + '.png')
+        except NoSuchElementException:
+            try:
+                a = self.get_absent().text
+                assert a == 'В данной категории нет товаров, или фильтр задан слишком строго.'
+                print('ИЗМЕНИ ПАРАМЕТРЫ ТЕСТА, ПОД ИМЕЮЩИЕСЯ НЕТ ТОВАРА')
+                self.driver.save_screenshot(
+                    'C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет товара ' \
+                    + self.date + '.png')
+                quit()
+            except AssertionError:
+                print('Что-то сломалось на странице')
+                self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Поломка кнопки оповещения ' \
+                                            + self.date + '.png')
+                quit()
     def do_close_learn(self):#Закрытие окна нотификации
         self.get_close_learn().click()
         print('Нотификация закрыта')
@@ -177,9 +222,17 @@ class Category_page(Base):
             self.get_arrow_right().click()
             print('Кликнули стрелку вправо')
         except NoSuchElementException:
-            print('АЛЯРМ! Стрелка не прожимается')
-            self.driver.execute_script('window.scrollTo(0, 1000)')
-            self.driver.save_screenshot('Стрелка почему-то не нажалась.png')
+            try:
+                a = self.get_absent().text
+                assert a == 'В данной категории нет товаров, или фильтр задан слишком строго.'
+                print('ИЗМЕНИ ПАРАМЕТРЫ ТЕСТА, ПОД ИМЕЮЩИЕСЯ НЕТ ТОВАРА')
+                self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет товара ' \
+                        + self.date + '.png')
+                quit()
+            except AssertionError:
+                print('АЛЯРМ! Стрелка не прожимается')
+                self.driver.execute_script('window.scrollTo(0, 1000)')
+                self.driver.save_screenshot('Стрелка почему-то не нажалась.png')
     def d_water_law(self):#Переход в карточку товара на 3 странице
         self.get_law().click()
         print('Зашли в товар')
@@ -194,9 +247,24 @@ class Category_page(Base):
         self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Зашли в товар на 1 странице + ' \
                                     + self.date + '.png')
     def print_orig_price(self):#Запоминание цены на общей странице товаров
-        value_price = self.get_orig_price().text
-        fs = open('orig_price.txt', 'w', encoding='utf-8')
-        fs.write(value_price)
+        try:
+            value_price = self.get_orig_price().text
+            fs = open('orig_price.txt', 'w', encoding='utf-8')
+            fs.write(value_price)
+        except NoSuchElementException:
+            try:
+                a = self.get_absent().text
+                assert a == 'В данной категории нет товаров, или фильтр задан слишком строго.'
+                print('ИЗМЕНИ ПАРАМЕТРЫ ТЕСТА, ПОД ИМЕЮЩИЕСЯ НЕТ ТОВАРА')
+                self.driver.save_screenshot(
+                    'C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Нет товара ' \
+                    + self.date + '.png')
+                quit()
+            except AssertionError:
+                print('Что-то сломалось на странице')
+                self.driver.save_screenshot('C:\\Users\\Igor\\PycharmProjects\\final_stuff\\screen\\ Поломка кнопки оповещения ' \
+                                            + self.date + '.png')
+                quit()
     def print_orig_name(self):#Запоминание имени на общей странице товаров
         value_name = self.get_orig_name().text
         fs = open('orig_name.txt', 'w', encoding='utf-8')
